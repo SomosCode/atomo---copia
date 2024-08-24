@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema Solar 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Crear el Sol
+        const sunGeometry = new THREE.SphereGeometry(7, 34, 34);
+        const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+
+             // Crear el nombre del Sol
+        const sunLabelCanvas = document.createElement('canvas');
+        const sunContext = sunLabelCanvas.getContext('2d');
+        sunContext.font = '50px Arial'; // Tamaño del texto para el nombre del Sol
+        sunContext.fillStyle = 'white';
+        sunContext.fillText('Sol', 0, 50); // Ajuste de posición del texto sol
+
+        const sunLabelTexture = new THREE.CanvasTexture(sunLabelCanvas);
+        const sunLabelMaterial = new THREE.SpriteMaterial({ map: sunLabelTexture });
+        const sunLabel = new THREE.Sprite(sunLabelMaterial);
+        sunLabel.scale.set(10, 5, 1); // Ajuste del tamaño del label
+        sunLabel.position.set(0, 7, 0); // Posición encima del Sol
+        scene.add(sunLabel)
+        // Crear planetas y sus nombres
+        const planetNames = ['Mercurio','Venus','Tierra','Marte'];
+        const planetColors = [0x888888, 0xffa500, 0x0000ff, 0xff0000];
+        const planets = [];
+        const labels = [];
+
+        for (let i = 0; i < 4; i++) {
+            // Crear planeta
+            const planetGeometry = new THREE.SphereGeometry(0.5 + i * 0.3, 32, 32);
+            const planetMaterial = new THREE.MeshPhongMaterial({ color: planetColors[i] });
+            const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+            scene.add(planet);
+            planets.push(planet);
+
+            // Crear label del planeta
+            const labelCanvas = document.createElement('canvas');
+            const context = labelCanvas.getContext('2d');
+            context.font = '40px Arial'; // Hacer el texto más grande
+            context.fillStyle = 'white';
+            context.fillText(planetNames[i], 0, 40); // Ajustar la posición del texto
+
+            const labelTexture = new THREE.CanvasTexture(labelCanvas);
+            const labelMaterial = new THREE.SpriteMaterial({ map: labelTexture });
+            const label = new THREE.Sprite(labelMaterial);
+            label.scale.set(6, 3, 1); // Ajustar el tamaño del label
+            scene.add(label);
+            labels.push(label);
+        }
+
+        // Agregar luz ambiental
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        // Agregar luz puntual (Sol)
+        const sunLight = new THREE.PointLight(0xffffff, 1, 100);
+        sunLight.position.set(0, 0, 0);
+        scene.add(sunLight);
+
+        // Posicionar la cámara
+        camera.position.z = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotar el Sol
+            sun.rotation.y += 0.005;
+
+            // Mover los planetas y sus nombres
+            const time = Date.now() * 0.001;
+            planets.forEach((planet, index) => {
+                const orbitRadius = 8 + index * 4;
+                const speed = 0.5 / (index + 1);
+                const angle = time * speed;
+
+                planet.position.x = Math.cos(angle) * orbitRadius;
+                planet.position.z = Math.sin(angle) * orbitRadius;
+                planet.rotation.y += 0.02 / (index + 1);
+
+                // Actualizar la posición del label
+                labels[index].position.set(planet.position.x, planet.position.y + 1.5, planet.position.z);
+                labels[index].lookAt(camera.position); // Mantener el label mirando hacia la cámara
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
